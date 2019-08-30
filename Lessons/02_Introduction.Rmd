@@ -15,21 +15,41 @@ editor_options:
 
 ## Opening Discussion
 What makes an effective data visualization? What are the essential components/characteristics, and what are optional but nice-to-have components/characteristics? 
-
 Come up with a consensus list among your group members. 
-
 Compare your list to other groups' lists. 
+=======================================
+- accessible color palettes --> and attractive & logical ones (graphic design)
+- units
+- axis labels
+- legible font sizes
+- data point size - large / small enough 
+- headline (context-dependent)
+- appropriate graph type
+- scales
+- interactive? (if published to web resource)
+=======================================
 
 ## Exploring web resources for visualization
 
 1. Navigate to https://www.data-to-viz.com/.
 2. Think of a dataset that you or someone in your field might want to visualize. What types of variables does this dataset contain? What information might you want to convey with a visualization?
-
-<add notes here>
+=======================================
+- climate change / pollution / measures of sustainability 
+- population data, choices, trajectories
+- assessments of survival rates
+- rates of disease, life expectancy
+- economic data -- CBA 
+- policy data
+=======================================
 
 3. Scroll to the "Explore" section of the website. Follow the flow chart to find a type of graph that would suit your data. Click for more information and a link to the R Graph Gallery. If there are multiple options for graphing your data, how might you choose between them?
-
-<add notes here> 
+=======================================
+- time series type is most appropriate
+- ggplot2 function
+- scale_x_data() to customize labels
+- plotly or dygraphs makes it interactive
+- heat map -- e.g. displaying climate changes
+=======================================
 
 4. Discuss and compare your findings with a partner.
 5. Scroll further down to the "Caveats" section of the website and click "See the Collection." Choose five topics to explore (some of these are incomplete so choose another if that is the case). Write some notes about what you learned below. 
@@ -115,6 +135,13 @@ EnoPlot <-
          geom_line() +
          xlab("Year")
 print(EnoPlot)
+
+EnoPlot2 <-
+  ggplot(EnoDischarge, aes(x = Date, y = Discharge)) + 
+  geom_line() +
+  ylab("Discharge (m^3/s)")
+mutate(EnoDischarge, Discharge.m3s = EnoDischarge./0.0283)
+print (EnoPlot2)
 ```
 
 Challenge: 
