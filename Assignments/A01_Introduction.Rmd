@@ -1,6 +1,6 @@
 ---
 title: "Assignment 1: Introduction"
-author: "Student Name"
+author: "Gabi Richichi"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
@@ -23,40 +23,61 @@ The completed exercise is due on 2019-09-04 before class begins.
 ## Course Setup
 1. Post the link to your forked GitHub repository below. Your repo should include one or more commits and an edited README file.  
 
->  Link:
+>  Link: https://github.com/grichichi/Hydrologic_Data_Analysis
 
 2. Complete the Consent Form in Sakai. You must choose to either opt in or out of the research study being conducted in our course.
 
 Did you complete the form? (yes/no)
 
-> 
+> yes
 
 ## Course Project
 
 3. What are some topics in aquatic science that are particularly interesting to you?
 
-> ANSWER: 
+> ANSWER: I am interested in biogeochemistry and aquatic pollutant chemistry.
 
 4. Are there specific people in class who you would specifically like to have on your team?
 
-> ANSWER: 
+> ANSWER: other undergrads
 
 5. Are there specific people in class who you would specifically *not* like to have on your team?
 
-> ANSWER: 
+> ANSWER: No
 
 ## Data Visualization Exercises
 
 6. Set up your work session. Check your working directory, load packages `tidyverse`,  `dataRetrieval`, and `lubridate`. Set your ggplot theme as theme_classic (you may need to look up how to set your theme).
 
-```{r, message = FALSE}
-
+```{r}
+getwd()
+library(tidyverse)
+library(dataRetrieval)
+library(lubridate)
+theme_set(theme_classic())
 ```
 
 7. Upload discharge data for the Eno River at site 02096500 for the same dates as we studied in class (2009-08-01 through 2019-07-31). Obtain data for discharge and gage height (you will need to look up these parameter codes). Rename the columns with informative titles. Imperial units can be retained (no need to change to metric).
 
 ```{r}
+EnoDischarge <- readNWISdv(siteNumbers = "02096500",
+                      parameterCd = "00060", # discharge (ft3/s)
+                      startDate = "2009-08-01",
+                      endDate = "2019-07-31")
 
+names(EnoDischarge)[4:5] <- c("Discharge", "Approval.Code")
+
+EnoGageHeight <- readNWISdv(siteNumbers = "02096500",
+                            parameterCd = "00065",
+                            startDate = "2009-08-01",
+                            endDate = "2019-07-31")
+
+names(EnoGageHeight)[4:5] <- c("GageHeight", "Approval.Code")
+
+attr(EnoDischarge, "variableInfo")
+attr(EnoDischarge, "siteInfo")
+attr(EnoGageHeight, "variableInfo")
+attr(EnoGageHeight, "siteInfo")
 ```
 
 8. Add a "year" column to your data frame (hint: lubridate has a `year` function).
@@ -72,6 +93,11 @@ Did you complete the form? (yes/no)
 * Make points 50 % transparent
 
 ```{r}
+#EnoPlot <- 
+#   ggplot(EnoDischarge, aes(x = Date, y = Discharge)) +
+#          geom_line() +
+#          xlab("Year")
+# print(EnoPlot)
 
 ```
 

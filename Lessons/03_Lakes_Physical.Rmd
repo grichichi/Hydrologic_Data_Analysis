@@ -1,3 +1,99 @@
+##NOTES-BEGINNING
+Git:
+- type in terminal "git remote -v" will tell you what origin (your repository) and upstream (Dr. Salk's) are
+- click on "Git" tab at top
+
+Office hours:
+- Dr. Salk: Thurs 11:30-12:30 & Fri 12-1 (3115 ENV Hall)
+- Cathy: Tues 9-11 (3120 ENV Hall)
+- Can also email for appt 
+
+Commit & push:
+- "Git" tab --> "commit" --> "commit message" --> "commit" --> "close" (will NOT show up on GitHub)
+- in Terminal "Git push" OR green arrow under "Git" tab (now will show up on GitHub)
+
+"Data" folder 
+- "ReadMe files" --> NT Lakes Rmd
+- line 12 URL -- copy & paste into web browser
+- NTL categories --> "cascade" --> "core data physical and chemical limnology 1984-2016"
+- "download all data (CSV) --> save in "Data" / "Raw" without spaces in name
+- resave data as "Process" rather than "Raw" if going to manipulate values
+
+Session set-up
+- getwd() is get working directory (see path)
+- good to use a git working directory rather than set working directory as specific path on computer because not useful when switching computers / working with multiple people
+- load packages so don't have to code everything from scratch
+    ex. tidyverse -- will output a message (NOT an error, just informative) -- will note 
+        conflicts (ex. dplyr filter is taking over regular base filter)]
+- install.packages() might be necessary before loading package
+- lubridate will output warning (date) --  just informing that this package will take over when using date
+- load date --> ./ means go one folder IN whereas .. means one folder OUT --> into data folder --> into "RAW" --> into name of file 
+- ^^ this same path should work on all our computers 
+
+RUN
+- "command" + "return" will run line or just highlight chunk and click "run" or click green triangle to run section 
+
+Set theme 
+theme_set(theme_classic()) for ggplot
+
+Dates:
+- have to standardize dates in csv files for R
+- enter "Environment" tab top right 
+- will see data set w/ 11 columns or "variables"
+- in our data file "sampledate" column has date
+- check class (NTLdata$sampledate) -- it is a "factor" because both numeric and slashes 
+- tell R to take column and perceive as "date" and read as ... format 
+    2 digit month, slash, 2 digit day, slash, 2 digit year
+- R will store as XXXX-XX-XX (yr, month, day) default once you tell it how it is formatted
+- NOW check class, and R knows it is a date
+
+Other aspects of data:
+- dim(NTLdata) <-- checks dimensions (rows / columns)
+- pipe?? NTLdata <- NTLdata %>% drop_na(temperature_C)
+^^ telling it to drop na's in temp column (notice: still na's in other columns)
+- NOW check dimensions and see change
+- "filter" will take certain rows (see below for code)
+
+Unique vs. summary
+- unique is for number data
+- summary is for integer
+- summary will tell you median, mean, quartiles, etc.
+
+Alpha
+- for transparency of graph 
+
+Paul graph
+- hypolimnion of a lake -- between 9 and 12 meters, very little difference 
+- epilimnion -- surface mix layer -- between zero (surface level) and 2 m depth, very little difference 
+- thermocline / metalimnion == mixing 
+- differences in density will resist mixing -- how we overcome them throughout the season
+
+plotting lake depth / profile data
+- will be upside down (y-axis) to orient according to lake depth -- scale_y_reverse
+- maximum density of water will be at 4 degC, because below that will expand to form ice crystals
+- in this example, in WI, in May of 2016... as ice melts, water column will be 4 degC all across... but in May it gets warmer & heats lake at surface (solar radiation) but light / heat doesn't penetrate as you go farther down ... therefore, max depth of epilimnion is 2-3m (base of same temp from surface to this point)
+- diffusion will be only thing happening at that point to hypo
+- hypolimnion at 5m... consistent mixing beyond that 
+
+new plot of yr July / Aug
+- cools & deepens epilimnion as gets more wintry 
+- differences in oxygen, nutrients, algal communities in mixing layer -- that will influence biogeochemistry 
+
+thermal profile of lake
+- smooth line
+- whereas in shallower areas --> more ragged data --> samples taken with profiler / human error --> real world data 
+- inconsistencies that might not be expected from theory 
+- not always going to get consistent profile throughout summer
+
+Paul lake is dimictic --> mixes twice throughout the year ... when? fall turnover (lose heat from top, wind driven mixing, density gradient not as large), and spring (ice on top (0 degC) while rest 4) and as melts entire column will be 4
+- stratification -- diffs throughout top & bottom 
+- NEED: wind & small density gradient <-- for mixing
+
+random note:
+- you should stop editing at column line 80 (will show up in editor -- row:col)
+
+##NOTES-END
+-------------------------------------------------------------------------------------------------
 ---
 title: "3: Physical Properties of Lakes"
 author: "Hydrologic Data Analysis | Kateri Salk"
@@ -15,6 +111,11 @@ editor_options:
 
 ## Opening Discussion
 What is a lake? How does this differ from a stream, river, or wetland?
+- NOT lakes / wetlands -- flow (lodic systems), whereas still (lentic systems)
+- landlocked -- not connected to ocean (otherwise estuary)
+- often in a depression / low point (not as much mountains -- unless in valley of mtn)
+- lake vs. wetland --> wetlands have emergent vegetation from sediment to water surface whereas lakes too deep for vegetation to make it through to surface
+- light will not penetrate to the bottom in a lake 
 
 What are the physical properties of lakes?
 
@@ -102,6 +203,10 @@ print(TempvsDepth)
 
 How do temperatures at the surface compare to temperatures at the mid-depths and at the bottom?
 <add notes here>
+- warmer near surface on average
+- wider variation near surface
+- never goes below zero 
+- sampling between May and August (sampled one time in November one year)
 
 Let's make a few data frames that include measurements from specific depths. We will choose dates only from the 2000s for ease of interpretation.
 

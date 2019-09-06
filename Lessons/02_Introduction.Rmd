@@ -1,3 +1,6 @@
+##NOTES-BEGINNING
+To pull Git repository at the beginning of each class -- "git pull upstream master" in terminal 
+##NOTES-END
 ---
 title: "2: R and Data Visualization Boot Camp"
 author: "Hydrologic Data Analysis | Kateri Salk"
