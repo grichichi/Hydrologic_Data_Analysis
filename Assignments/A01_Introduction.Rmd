@@ -83,6 +83,13 @@ attr(EnoGageHeight, "siteInfo")
 8. Add a "year" column to your data frame (hint: lubridate has a `year` function).
 
 ```{r}
+#EnoDischarge$sampledate <- as.Date(EnoDischarge$sampledate, "%m/%d/%y") <- unnecessary because already in date form
+
+EnoDischarge <- EnoDischarge %>%
+  mutate(Year = year(Date))
+
+EnoGageHeight <- EnoGageHeight %>%
+  mutate(Year = year(Date))
 
 ```
 
