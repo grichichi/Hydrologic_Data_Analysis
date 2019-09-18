@@ -60,24 +60,15 @@ theme_set(theme_classic())
 7. Upload discharge data for the Eno River at site 02096500 for the same dates as we studied in class (2009-08-01 through 2019-07-31). Obtain data for discharge and gage height (you will need to look up these parameter codes). Rename the columns with informative titles. Imperial units can be retained (no need to change to metric).
 
 ```{r}
-EnoDischarge <- readNWISdv(siteNumbers = "02096500",
-                      parameterCd = "00060", # discharge (ft3/s)
+EnoDGH <- readNWISdv(siteNumbers = "02096500",
+                      parameterCd = c("00060", "00065"),# discharge (ft3/s)
                       startDate = "2009-08-01",
                       endDate = "2019-07-31")
 
-names(EnoDischarge)[4:5] <- c("Discharge", "Approval.Code")
+names(EnoDGH)[4:6] <- c("Discharge", "Approval.Code", "GageHeight")
 
-EnoGageHeight <- readNWISdv(siteNumbers = "02096500",
-                            parameterCd = "00065",
-                            startDate = "2009-08-01",
-                            endDate = "2019-07-31")
-
-names(EnoGageHeight)[4:5] <- c("GageHeight", "Approval.Code")
-
-attr(EnoDischarge, "variableInfo")
-attr(EnoDischarge, "siteInfo")
-attr(EnoGageHeight, "variableInfo")
-attr(EnoGageHeight, "siteInfo")
+attr(EnoDGH, "variableInfo")
+attr(EnoDGH, "siteInfo")
 ```
 
 8. Add a "year" column to your data frame (hint: lubridate has a `year` function).
@@ -85,10 +76,7 @@ attr(EnoGageHeight, "siteInfo")
 ```{r}
 #EnoDischarge$sampledate <- as.Date(EnoDischarge$sampledate, "%m/%d/%y") <- unnecessary because already in date form
 
-EnoDischarge <- EnoDischarge %>%
-  mutate(Year = year(Date))
-
-EnoGageHeight <- EnoGageHeight %>%
+EnoDGH <- EnoDGH %>%
   mutate(Year = year(Date))
 
 ```
@@ -100,26 +88,37 @@ EnoGageHeight <- EnoGageHeight %>%
 * Make points 50 % transparent
 
 ```{r}
-#EnoPlot <- 
-#   ggplot(EnoDischarge, aes(x = Date, y = Discharge)) +
-#          geom_line() +
-#          xlab("Year")
-# print(EnoPlot)
+EnoPlot <- 
+   ggplot(EnoDGH, aes(x = GageHeight, y = Discharge)) +
+          geom_line() +
+          xlab("GageHeight (ft)") +
+          ylab("Discharge (ft^3/s)")
+print(EnoPlot)
 
 ```
 
 10. Interpret the graph you made. Write 2-3 sentences communicating the main takeaway points. 
 
-> ANSWER: 
+> ANSWER: As Gage Height increases, so does Discharge. The relationship is positive and slightly exponential. 
 
 11. Create a ggplot violin plot of discharge, divided by year. (Hint: in your aesthetics, specify year as a factor rather than a continuous variable). Make the following edits to follow good data visualization practices: 
 
 * Remove x axis label
 * Add a horizontal line at the 0.5 quantile within each violin (hint: draw_quantiles)
 ```{r}
+#library(viridis)
+library(hrbrthemes)
 
+EnoPlot2 <-
+  ggplot(EnoDGH, aes(x = Year, y = Discharge)) +
+  geom_violin() +
+  #scale_color_viridisLite(discrete=TRUE) +
+  #draw_quantiles(0.5) +
+  theme_ipsum() +
+  ylab("Discharge (ft^3/s)")
+print(EnoPlot2)
 ```
 
 12. Interpret the graph you made. Write 2-3 sentences communicating the main takeaway points. 
 
-> ANSWER: 
+> ANSWER: There is a sharp increase in Discharge in the year 2014. 
