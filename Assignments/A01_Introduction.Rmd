@@ -106,14 +106,13 @@ print(EnoPlot)
 * Remove x axis label
 * Add a horizontal line at the 0.5 quantile within each violin (hint: draw_quantiles)
 ```{r}
-#library(viridis)
+library(viridis)
 library(hrbrthemes)
 
 EnoPlot2 <-
   ggplot(EnoDGH, aes(x = Year, y = Discharge)) +
   geom_violin() +
-  #scale_color_viridisLite(discrete=TRUE) +
-  #draw_quantiles(0.5) +
+  draw_quantiles(0.5) +
   theme_ipsum() +
   ylab("Discharge (ft^3/s)")
 print(EnoPlot2)

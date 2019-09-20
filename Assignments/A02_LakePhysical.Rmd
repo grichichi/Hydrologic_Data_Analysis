@@ -28,7 +28,7 @@ The completed exercise is due on 11 September 2019 at 9:00 am.
 4. Set your ggplot theme (can be theme_classic or something else)
 
 ```{r}
-
+getwd()
 ```
 
 ## Creating and analyzing lake temperature profiles
