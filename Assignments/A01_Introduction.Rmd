@@ -88,18 +88,23 @@ EnoDGH <- EnoDGH %>%
 * Make points 50 % transparent
 
 ```{r}
+library(viridis)
+library(cowplot)
+library(gridExtra)
 EnoPlot <- 
-   ggplot(EnoDGH, aes(x = GageHeight, y = Discharge)) +
-          geom_line() +
-          xlab("GageHeight (ft)") +
-          ylab("Discharge (ft^3/s)")
+   ggplot(EnoDGH, aes(x = GageHeight, y = Discharge, color = "daynum")) +
+        #  geom_point(aes(color = Discharge)) +
+         # scale_color_viridis(option = "D") 
+          geom_point(alpha = 0.5) +
+         # scale_color_viridis(option = "D")
+          labs(x = "GageHeight (ft)", y = expression("Discharge (ft"^3*")"))
 print(EnoPlot)
 
 ```
 
 10. Interpret the graph you made. Write 2-3 sentences communicating the main takeaway points. 
 
-> ANSWER: As Gage Height increases, so does Discharge. The relationship is positive and slightly exponential. 
+> ANSWER: As Gage Height increases, so does Discharge. The relationship is positive and slightly exponential. There is a greater number of data points at lower GageHeights, compared to at higher GageHeights. 
 
 11. Create a ggplot violin plot of discharge, divided by year. (Hint: in your aesthetics, specify year as a factor rather than a continuous variable). Make the following edits to follow good data visualization practices: 
 
@@ -108,16 +113,19 @@ print(EnoPlot)
 ```{r}
 library(viridis)
 library(hrbrthemes)
+library(ggplot2)
+library(plotly)
 
+EnoDGH$Year <- as.factor(EnoDGH$Year)
+head(EnoDGH)
 EnoPlot2 <-
   ggplot(EnoDGH, aes(x = Year, y = Discharge)) +
-  geom_violin() +
-  draw_quantiles(0.5) +
-  theme_ipsum() +
-  ylab("Discharge (ft^3/s)")
+  labs(x = "", y = expression("Discharge (ft"^3*"/s)")) +
+  geom_violin()
+  #draw_quantiles(0.5)
 print(EnoPlot2)
 ```
 
 12. Interpret the graph you made. Write 2-3 sentences communicating the main takeaway points. 
 
-> ANSWER: There is a sharp increase in Discharge in the year 2014. 
+> ANSWER: Discharge decreases until 2011 and then increases thereafter. Perhaps an event transpired in 2011 that decreased discharge. 
