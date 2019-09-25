@@ -181,7 +181,7 @@ summary(Augusttest)
 # 1.32 degree increase over period of study for August
 
 Tempchange.plot <-
-  ggplot(Pauldata.test, aes(x = sampledate, y = temperature_C)) +
+  ggplot(Pauldata, aes(x = sampledate, y = temperature_C)) +
   geom_point() +
   geom_smooth(se = FALSE, method = lm) +
   facet_grid(rows = vars(Month))

@@ -30,8 +30,22 @@ The completed exercise is due on 18 September 2019 at 9:00 am.
 
 ```{r}
 getwd()
+library(tidyverse)
+library(dataRetrieval)
+library(cowplot)
+theme_set(theme_classic())
 
+MysterySiteDischarge <- readNWISdv(siteNumbers = "03431700",
+                     parameterCd = c("00060"))
 
+names(MysterySiteDischarge)[4:5] <- c("Discharge", "Approval.Code")
+
+MysteryPlot <-
+  ggplot(MysterySiteDischarge, aes(x = Date, y = Discharge)) +
+geom_point() +
+  ggtitle("Mystery Site Discharge") + 
+  labs(x = "Date", y = expression("Discharge (ft"^3*")"))
+print(MysteryPlot)
 ```
 
 ## Analyze seasonal patterns in discharge
@@ -40,8 +54,21 @@ getwd()
 6. Create a new data frame called "MysterySiteDischarge.Pattern" that has columns for Day.of.Year, median discharge for a given day of year, 75th percentile discharge for a given day of year, and 25th percentile discharge for a given day of year. Hint: the summarise function includes `quantile`, wherein you must specify `probs` as a value between 0 and 1.
 7. Create a plot of median, 75th quantile, and 25th quantile discharges against day of year. Median should be black, other lines should be gray. 
 ```{r}
+#MysterySiteDischarge <- MysterySiteDischarge %>%
+#  mutate(Year = year(sampledate))
+
+#MysterySiteDischarge <- MysterySiteDischarge %>%
+#  mutate(Day.of.Year = Date)
+
+#MysterySiteDischarge <- MysterySiteDischarge %>%
+#  mutate(seventyfifth = summarise(Discharge, quantile(probs = 0.75)))
+
+#MysterySiteDischarge.Pattern <- (MysterySiteDischarge$Day.of.Year, )
 
 
+#summarise(quantile(probs = 0.75))
+#summarise(quantile(probs = 0.25))
+  
 ```
 
 8. What seasonal patterns do you see? What does this tell you about precipitation patterns and climate in the watershed?
