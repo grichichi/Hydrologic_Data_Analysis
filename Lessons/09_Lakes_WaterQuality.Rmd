@@ -34,14 +34,14 @@ getwd()
 
 library(tidyverse)
 library(lubridate)
-install.packages("LAGOSNE")
+#install.packages("LAGOSNE") <- only have to run this once 
 library(LAGOSNE)
 library(dplyr)
 
 theme_set(theme_classic())
 options(scipen = 100)
 
-lagosne_get(dest_folder = LAGOSNE:::lagos_path(), overwrite = TRUE)
+lagosne_get(dest_folder = LAGOSNE:::lagos_path(), overwrite = TRUE) #<- only have to run this once
 
 ```
 
@@ -57,11 +57,11 @@ https://cont-limno.github.io/LAGOSNE/articles/lagosne_structure.html
 
 ```{r}
 # Load LAGOSNE data into R session
-#LAGOSdata <- lagosne_load()
-#names(LAGOSdata)
+LAGOSdata <- lagosne_load()
+names(LAGOSdata)
 
 # If the package installation and data download has not worked, use this code: 
-# load(file = "./Data/Raw/LAGOSdata.rda")
+load(file = "./Data/Raw/LAGOSdata.rda")
 
 # Exploring the data types that are available
 LAGOSlocus <- LAGOSdata$locus
@@ -215,7 +215,7 @@ print(chlvstp)
 
 What is the observed relationship, and how does it depart from the 1:1 relationship? What do values above or below the 1:1 line tell us about the conditions present in a lake?
 
-> 
+> A 1:1 relationship would mean that at a given point, both chlorophyll levels and secchi disk depth output the same trophic state index value.
 
 ### Comparing TSI across states
 Here are three different ways to envision TSI across the states in the LAGOS-NE database. 
@@ -253,11 +253,23 @@ print(stateTSIjitter)
 ```
 What insights do we gain from the different visualizations?
 
-> Violin: 
+> Violin: can reveal more information than a box plot; works best in situation where you have shorter range and higher density; good information about range, median, distribution 
 
-> Bar: 
+> Bar: conducive to comparisons of different conditions; good for seeing number of observations and for splitting up based on trophic classes or other categories 
 
 > Jitter:
 
 ## Closing Discussion
 What factors might you expect to influence TSI scores in a given area? What are some variables in the LAGOSNE database that could help you test your hypothesis?
+
+- different lakes from different areas have different baselines
+- if there is deviation from the norm over time (e.g. a lot of eutrophication) this might indicate an issue
+
+- csv file is non-proprietary, so it is a good file type to save 
+```{r}
+#option, command, i
+write.csv(LAGOStrophic, "./Data/LAGOStrophic.csv", row.names = FALSE)
+
+```
+
+
