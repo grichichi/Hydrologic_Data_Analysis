@@ -35,6 +35,7 @@ options(scipen = 100)
 
 # Load LAGOSNE data into R session
 LAGOSdata <- lagosne_load()
+LAGOSnutrient <- LAGOSdata$epi_nutr
 # If the lagosne_get function has not worked, use this code: 
 # load(file = "./Data/Raw/LAGOSdata.rda")
 
@@ -61,8 +62,8 @@ Wrangle LAGOSdata so that you have a new data frame that includes TN, TP, your f
 ```{r}
 # Wrangle data here.
 NewData <- LAGOSnutrient %>%
-  select(no2no3, no2, nh4, doc, chla, tp, tn)
-NewDataDropNA <- drop_na(NewData, tp:tn)
+  select(no2no3, nh4, doc, chla, tp, tn)
+NewDataDropNA <- drop_na(NewData)
 ```
 
 Examine potential correlations among your predictor variables. If your predictor variables are highly correlated with each other, your model will suffer from *multicollinearity,* essentially that two or more of your predictor variables provide redundant information. Model fit and accuracy of model coefficients suffer when multicollinearity is present. 
@@ -70,22 +71,54 @@ Examine potential correlations among your predictor variables. If your predictor
 1. Create a correlation plot for your 7 variables of interest (TN, TP, and the five predictor variables). What patterns do you see? (hint: function `corrplot` in the corrplot package. I like to use `upper = "ellipse"` inside the function).
 
 ```{r}
-CorrelationPlot <- corrplot(NewDataDropNA, aes(x = sampledate, y = ))
+library(RColorBrewer)
+Correlation <- cor(NewDataDropNA)
+CorrelationPlot <- corrplot(Correlation, type = "upper", method = "ellipse")
+print(CorrelationPlot)
 ```
 
 What patterns do you see?
 
->
+> There seems to be a high and positive correlation between total nitrogen and total phosphorus and dissolved organic carbon. 
+There is a moderate and positive correlation between total nitrogen and NO2NO3 and chlorophyll levels. 
+There is a high and positive correlation between total phosphorus and chlorophyll levels. 
+There is a moderate and positive relationship between total phosphorus and NO2NO3.
 
 2. Create two linear regression models (hint: function `lm`) to predict TN and TP using your five predictor variables. 
 
 ```{r}
+no2no3_tnTest <- lm(tn ~ no2no3, NewDataDropNA)
+summary(no2no3_tnTest)
+
+no2no3_tpTest <- lm(tp ~ no2no3, NewDataDropNA)
+summary(no2no3_tpTest)
+
+nh4_tnTest <- lm(tn ~ nh4, NewDataDropNA)
+summary(nh4_tnTest)
+
+nh4_tpTest <- lm(tp ~ nh4, NewDataDropNA)
+summary(nh4_tpTest)
+
+doc_tnTest <- lm(doc ~ tn, NewDataDropNA)
+summary(doc_tnTest)
+
+doc_tpTest <- lm(doc ~ tp, NewDataDropNA)
+summary(doc_tpTest)
+
+chla_tnTest <- lm(tn ~ chla, NewDataDropNA)
+summary(chla_tnTest)
+
+chla_tpTest <- lm(tp ~ chla, NewDataDropNA)
+summary(chla_tpTest)
+
+tp_tnTest <- lm(tp ~ tn, NewDataDropNA)
+summary(tp_tnTest)
 
 ```
 
 How much variance in TN and TP is accounted for by your full model?
 
->
+> 
 
 3. Calculate variance inflation factors (VIF) for each of the variables in both models (hint: `vif` function in the car package). VIF values exceeding 5-10 indicates an issue with multicollinearity for that variable. Note: you should evaluate VIF values separately for each model.
 
