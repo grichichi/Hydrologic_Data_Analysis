@@ -1,6 +1,6 @@
 ---
 title: "Assignment 5: Water Quality in Lakes"
-author: "Student Name"
+author: "Gabi Richichi"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
@@ -28,7 +28,56 @@ The completed exercise is due on 2 October 2019 at 9:00 am.
 4. Load the LAGOSdata database and the trophic state index csv file we created on 2019/09/27.
 
 ```{r setup}
+getwd()
+library(tidyverse)
+library(lubridate)
+library(LAGOSNE)
 
+theme_set(theme_classic())
+
+LAGOSdata <- lagosne_load()
+#load(file = "./Data/Raw/LAGOSdata.rda")
+
+#The following is code from Lesson 9: Lakes_WaterQuality
+LAGOSlocus <- LAGOSdata$locus
+LAGOSstate <- LAGOSdata$state
+LAGOSnutrient <- LAGOSdata$epi_nutr
+
+LAGOSlocus$lagoslakeid <- as.factor(LAGOSlocus$lagoslakeid)
+LAGOSnutrient$lagoslakeid <- as.factor(LAGOSnutrient$lagoslakeid)
+
+LAGOSlocations <- left_join(LAGOSlocus, LAGOSstate, by = "state_zoneid")
+
+LAGOSlocations <- 
+  within(LAGOSlocations, 
+         state <- factor(state, levels = names(sort(table(state), decreasing=TRUE))))
+
+LAGOStrophic <- 
+  left_join(LAGOSnutrient, LAGOSlocations, by = "lagoslakeid") %>%
+  select(lagoslakeid, sampledate, chla, tp, secchi, 
+         gnis_name, lake_area_ha, state, state_name) %>%
+  mutate(sampleyear = year(sampledate), 
+         samplemonth = month(sampledate), 
+         season = as.factor(quarter(sampledate, fiscal_start = 12))) %>%
+  drop_na(chla:secchi)
+
+levels(LAGOStrophic$season) <- c("Winter", "Spring", "Summer", "Fall")
+
+LAGOStrophic <- 
+  mutate(LAGOStrophic, 
+         TSI.chl = round(10*(6 - (2.04 - 0.68*log(chla)/log(2)))), 
+         TSI.secchi = round(10*(6 - (log(secchi)/log(2)))), 
+         TSI.tp = round(10*(6 - (log(48/tp)/log(2)))), 
+         trophic.class.chl = 
+            ifelse(TSI.chl < 40, "Oligotrophic", 
+                   ifelse(TSI.chl < 50, "Mesotrophic",
+                          ifelse(TSI.chl < 70, "Eutrophic", "Hypereutrophic"))))
+
+LAGOStrophic$trophic.class <- 
+  factor(LAGOStrophic$trophic.class,
+         levels = c("Oligotrophic", "Mesotrophic", "Eutrophic", "Hypereutrophic"))
+
+#write.csv(LAGOStrophic, "./Data/LAGOStrophic.csv")#, row.names = FALSE)
 ```
 
 ## Trophic State Index
@@ -36,6 +85,16 @@ The completed exercise is due on 2 October 2019 at 9:00 am.
 5. Similar to the trophic.class column we created in class (determined from TSI.chl values), create two additional columns in the data frame that determine trophic class from TSI.secchi and TSI.tp (call these trophic.class.secchi and trophic.class.tp). 
 
 ```{r}
+LAGOStrophic <-
+  mutate(LAGOStrophic,
+         trophic.class.secchi = 
+           ifelse(TSI.secchi < 40, "Oligotrophic", 
+                   ifelse(TSI.secchi < 50, "Mesotrophic",
+                          ifelse(TSI.secchi < 70, "Eutrophic", "Hypereutrophic"))),
+         trophic.class.tp =
+           ifelse(TSI.tp < 40, "Oligotrophic",
+                  ifelse(TSI.tp < 50, "Mesotrophic",
+                         ifelse(TSI.tp < 70, "Eutrophic", "Hypereutrophic"))))
 
 ```
 
@@ -43,18 +102,65 @@ The completed exercise is due on 2 October 2019 at 9:00 am.
 6. How many observations fall into the four trophic state categories for the three metrics (trophic.class, trophic.class.secchi, trophic.class.tp)? Hint: `count` function.
 
 ```{r}
+FrameTotal <- LAGOStrophic %>%
+  select(trophic.class)
+FrameSecchi <- LAGOStrophic %>%
+  select(trophic.class.secchi)
+FrameTp <- LAGOStrophic %>%
+  select(trophic.class.tp)
 
+ObservationsTotal <- count(FrameTotal)
+ObservationsSecchi <- count(FrameSecchi)
+ObservationsTp <- count(FrameTp)
 ```
+There are 74,951 observations in the LAGOStrophic data frame. 
 
 7. What proportion of total observations are considered eutrohic or hypereutrophic according to the three different metrics (trophic.class, trophic.class.secchi, trophic.class.tp)?
 
 ```{r}
+#FrameTotal$trophic.class[1]
 
+#ClassEu <- data.frame(values=numeric())
+#ClassEuLoop <- #FrameTotal %<%
+#  for(i in FrameTotal$trophic.class){
+#  if(i == "Eutrophic"){
+    #ClassEu$values[1] = i
+#    ClassEu <- rbind(ClassEu, FrameTotal$trophic.class[i])
+#  }
+#}
+
+ClassEu <- sum(FrameTotal$trophic.class == "Eutrophic")
+ClassEu
+ClassHyp <- sum(FrameTotal$trophic.class == "Hypereutrophic")
+ClassHyp
+ClassEu_Hyp = ClassEu + ClassHyp
+ClassEu_Hyp
+
+SecchiEu <- sum(FrameSecchi$trophic.class.secchi == "Eutrophic")
+SecchiEu
+SecchiHyp <- sum(FrameSecchi$trophic.class.secchi == "Hypereutrophic")
+SecchiHyp
+SecchiEu_Hyp = SecchiEu + SecchiHyp
+SecchiEu_Hyp
+
+TpEu <- sum(FrameTp$trophic.class.tp == "Eutrophic")
+TpEu
+TpHyp <- sum(FrameTp$trophic.class.tp == "Hypereutrophic")
+TpHyp
+TpEu_Hyp = TpEu + TpHyp
+TpEu_Hyp
+
+ClassProp <- ClassEu_Hyp/ObservationsTotal
+ClassProp
+SecchiProp <- SecchiEu_Hyp/ObservationsTotal
+SecchiProp
+TpProp <- TpEu_Hyp/ObservationsTotal
+TpProp
 ```
 
 Which of these metrics is most conservative in its designation of eutrophic conditions? Why might this be?
 
-> 
+> The total phosphorus method is the most conservative in its designation of eutrophic conditions. The proportion of measurements considered eutrophic or hypereutrophic in the total phosphorus column is 42.7%, whereas the proportion of measurements considered eutrophic or hypertrophic based on secchi and chlorophyll measurements are 45.0% and 75.0%, respectively. This might be because there are other nutrients that account for eutrophication, such as nitrogen, that measurements for phosphorus do not take into account. 
 
 Note: To take this further, a researcher might determine which trophic classes are susceptible to being differently categorized by the different metrics and whether certain metrics are prone to categorizing trophic class as more or less eutrophic. This would entail more complex code.
 
@@ -63,37 +169,64 @@ Note: To take this further, a researcher might determine which trophic classes a
 8. Create a data frame that includes the columns lagoslakeid, sampledate, tn, tp, state, and state_name. Mutate this data frame to include sampleyear and samplemonth columns as well. Call this data frame LAGOSNandP. 
 
 ```{r}
+LAGOSNandP <- LAGOStrophic %>%
+  select(lagoslakeid, sampledate, tp, state, state_name) %>%
+  mutate(sampleyear = year(sampledate), 
+         samplemonth = month(sampledate), 
+         season = as.factor(quarter(sampledate, fiscal_start = 12)))
+#NOTE: left off tn column, because had all "na" values
 
 ```
 
 9. Create two violin plots comparing TN and TP concentrations across states. Include a 50th percentile line inside the violins.
 ```{r}
-
+statetpviolin <- ggplot(LAGOSNandP, aes(x = state, y = tp)) +
+  geom_violin(draw_quantiles = 0.50) +
+  ggtitle("Total Phosphorus Levels by state") +
+  xlab("State") +
+  ylab("Total Phosphorus (mg/L)")
+print(statetpviolin)
+#NOTE: did not create a tn plot, because the tn column had all "na" values
 ```
 
 Which states have the highest and lowest median concentrations?
 
-> TN:
+> TN: Did not use tn data, because entire column had "na" values.
 
-> TP:
+> TP: Iowa seems to have the highest median concentration of total phosphorus, and Maine seems to have the lowest. 
 
 Which states have the highest and lowest concentration ranges?
 
-> TN: 
+> TN: Did not use tn data, because entire column had "na" values.
 
-> TP: 
+> TP: Minnesota seems to have the highest concentration range, and New Hampshire seems to have the lowest. 
 
 10. Create two jitter plots comparing TN and TP concentrations across states, with samplemonth as the color. Choose a color palette other than the ggplot default.
 
 ```{r}
-
+statetpjitter <- ggplot(LAGOSNandP, aes(x = state, y = tp), color = samplemonth) + #color = samplemonth)) +
+ # geom_rect(xmin = -1, xmax = 19, ymin = 0, ymax = 40,
+#            fill = "gray90", color = "gray90") +
+#  geom_rect(xmin = -1, xmax = 19, ymin = 40, ymax = 50,
+#            fill = "gray80", color = "gray80") +
+#  geom_rect(xmin = -1, xmax = 19, ymin = 50, ymax = 70,
+#            fill = "gray70", color = "gray70") +
+#  geom_rect(xmin = -1, xmax = 19, ymin = 70, ymax = 100,
+#            fill = "gray60", color = "gray60") +
+  geom_jitter(alpha = 0.3) +
+  labs(x = "State", y = "Total Phosphorus (mg/L)")
+  #scale_y_continuous() +#limits = c(0, 100)) +
+ # theme(legend.position = "top") +
+#  scale_color_viridis_d(option = "magma")
+print(statetpjitter)
+#NOTE: did not create a tn plot, because the tn column had all "na" values
 ```
 
 Which states have the most samples? How might this have impacted total ranges from #9?
 
-> TN:
+> TN: Did not use tn data, because entire column had "na" values.
 
-> TP: 
+> TP: It appears that many of the midwestern states have the most samples. This may have increased their range values from #9. 
 
 Which months are sampled most extensively? Does this differ among states?
 
@@ -117,16 +250,19 @@ Which years are sampled most extensively? Does this differ among states?
 ## Reflection
 12. What are 2-3 conclusions or summary points about lake water quality you learned through your analysis?
 
->
+> I have learned:
+1) That chlorophyll levels are a more liberal indication of lake eutrophication, while total phosphorus concentrations are a more conservative indication of eutrophication. 
+2) That there is considerable variety in the nutrient levels in lakes depending upon the state in which the measurements are being taken. 
+3) That nutrient levels vary depending on the season. 
 
 13. What data, visualizations, and/or models supported your conclusions from 12?
 
-> 
+> The violin plot allowed me to visualize the ranges in nutrient levels quite well. The jitter plot allowed me to visualize densities of measurements and time-based / seasonal / monthly changes. 
 
 14. Did hands-on data analysis impact your learning about water quality relative to a theory-based lesson? If so, how?
 
->
+> Yes, I believe it did. Coding requires a lot of thinking and problem-solving, which made me more engaged with this material. 
 
 15.	How did the real-world data compare with your expectations from theory?
 
->
+> It is expected that as nutrient levels increase, so does eutrophication. It is also expected that nutrient levels would vary state-by-state. 
