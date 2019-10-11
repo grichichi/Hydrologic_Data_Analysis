@@ -55,11 +55,11 @@ In general, detecting a monotonic trend requires a long sequence of data with fe
 
 Adjusting the data may be necessary to fulfill the assumptions of a trend test. These adjustments include **aggregation**, **subsampling**, and **interpolation**. What do each of these mean, and why might we want to use them?
 
-> aggregation: 
+> aggregation: combining multiple sets of data 
 
-> subsampling: 
+> subsampling: if you have a dataset composed of different sampling frequencies, it would not be a good idea to aggregate data -- match the more frequent data to the less frequent data
 
-> interpolation: 
+> interpolation: filling in gaps in dataset 
 
 Specific tests for monotonic trend analysis are listed below, with assumptions and tips: 
 
@@ -67,6 +67,7 @@ Specific tests for monotonic trend analysis are listed below, with assumptions a
 * **Mann-Kendall**: no seasonality, non-parametric, no temporal autocorrelation, missing data allowed. Function: `mk.test` (package: trend)
 * **modified Mann-Kendall**: no seasonality, non-parametric, accounts for temporal autocorrelation, missing data allowed. Function: `mmky` and `mmkh` (package: modifiedmk)
 * **Seasonal Mann-Kendall**: seasonality, non-parametric, no temporal autocorelation, identical distribution. Function: `smk.test` (package: trend)
+#identical distribution assumes a constant sampling frequency for data
 
 The packages trend, Kendall, and modifiedmk also include other modifications to monotonic trend tests. Look into the documentation for these packages if you are applying a special case.
 
@@ -109,7 +110,7 @@ Detecting whether the outlier is a true measurement or a mistake in the dataset 
 # Remove issues 1 and 2, arrange by date
 Mendotadata <- Mendotadata %>%
   filter(tp < 300 & sampledate > "1988-01-01") %>%
-  arrange(sampledate)
+  arrange(sampledate) #sorts by date
 
 # Re-plot data
 MendotaTP <-
@@ -125,9 +126,10 @@ We see that TP data were collected somewhere between biweekly and monthly across
 
 Common interpolation methods: 
 
-* **Piecewise constant**: <fill in notes here>
-* **Linear**: <fill in notes here>
-* **Spline**: <fill in notes here>
+* **Piecewise constant**: AKA "nearest neighbor" interpolation
+* **Linear**: drawing direct lines between two points and placing point exactly in the middle of the line
+* **Spline**: looks more curvy; typically doesn't outperform linear, so we'll usually go with that
+loess smoothing draws line along data in mathematical fashion
 
 Linear interpolation is most common for water quality data, and fits with our understanding about how TP might change over time in this system. 
 ```{r}
@@ -158,7 +160,7 @@ summary(Mendotatrend)
 
 What would we conclude based on these findings? Describe as you would to an educated but non-specialist audience.
 
->
+> There is no significant trend in the data over time. However, there is a significant decrease in total phosphorus for the months of October and November across time.
  
 If a significant trend was present, we could compute a **Sen's Slope** to quantify that trend (`sens.slope` function in the trend package).
  

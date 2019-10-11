@@ -1,6 +1,6 @@
 ---
 title: "Assignment 6: Time Series Analysis"
-author: "Student Name"
+author: "Gabi Richichi"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
@@ -28,6 +28,19 @@ The completed exercise is due on 11 October 2019 at 9:00 am.
 4. Load the ClearCreekDischarge.Monthly.csv file from the processed data folder. Call this data frame ClearCreekDischarge.Monthly.
 
 ```{r setup}
+getwd()
+library(tidyverse)
+library(lubridate)
+library(trend)
+library(dataRetrieval)
+
+theme_set(theme_classic())
+
+ClearCreekDischarge.Monthly <- readNWISdv(siteNumbers = "06719505",
+                     parameterCd = "00060", # discharge (ft3/s)
+                     startDate = "",
+                     endDate = "")
+names(ClearCreekDischarge.Monthly)[4:5] <- c("Discharge", "Approval.Code")
 
 ```
 
