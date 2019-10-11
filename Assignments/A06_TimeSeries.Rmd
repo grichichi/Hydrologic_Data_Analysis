@@ -36,12 +36,7 @@ library(dataRetrieval)
 
 theme_set(theme_classic())
 
-ClearCreekDischarge.Monthly <- readNWISdv(siteNumbers = "06719505",
-                     parameterCd = "00060", # discharge (ft3/s)
-                     startDate = "",
-                     endDate = "")
-names(ClearCreekDischarge.Monthly)[4:5] <- c("Discharge", "Approval.Code")
-
+#ClearCreekDischarge.Monthly <- read.csv(file = "Data/Processed/ClearCreekDischarge.Monthly.csv")
 ```
 
 ## Time Series Decomposition
@@ -51,14 +46,61 @@ names(ClearCreekDischarge.Monthly)[4:5] <- c("Discharge", "Approval.Code")
 8. Decompose the time series using the `stl` function.
 9. Visualize the decomposed time series.
 ```{r}
+EnoDailyMeanDischarge <- readNWISdv(siteNumbers = "02085070",
+                                    parameterCd = "00060",
+                                    startDate = "",
+                                    endDate = "")
+names(EnoDailyMeanDischarge)[4:5] <- c("Discharge", "Approval.Code")
 
+EnoDischargeTimePlot <- 
+  ggplot(EnoDailyMeanDischarge, aes(x = Date, y = Discharge)) +
+  xlab("Date") +
+  ylab(expression("Discharge (ft"^3*"/s)")) +
+  geom_line() +
+  ggtitle("Discharge vs. Time")
+print(EnoDischargeTimePlot)
+
+EnoDischargeRegressionPlot <- 
+  ggplot(EnoDailyMeanDischarge, aes(x = Date, y = Discharge)) +
+  geom_line() +
+  geom_smooth(method = "lm", se = FALSE, color = "#c13d75ff") +
+  labs(x = "", y = expression("Discharge (ft"^3*"/s)")) + 
+  ggtitle("Discharge vs. Time with Linear Regression")
+print(EnoDischargeRegressionPlot)
+
+Eno_ts <- ts(EnoDailyMeanDischarge[[4]], frequency = 365)
+
+Eno_Decomposed <- stl(Eno_ts, s.window = "periodic")
+
+plot(Eno_Decomposed)  
+
+Eno_Components <- as.data.frame(Eno_Decomposed$time.series[,1:3])
+Eno_Components <- mutate(Eno_Components,
+                      Observed = EnoDailyMeanDischarge$Discharge,     
+                      Date = EnoDailyMeanDischarge$Date)
+
+ggplot(Eno_Components) +
+  geom_line(aes(y = Observed, x = Date),  size = 0.25) +
+  geom_line(aes(y = trend, x = Date), color = "#c13d75ff") +
+  geom_hline(yintercept = 0, lty = 2) +
+  ggtitle("Discharge vs. Time with Trend Component") + 
+  labs(x = "", y = expression("Discharge (ft"^3*"/s)"))
+  
+ggplot(Eno_Components) +
+  geom_line(aes(y = Observed, x = Date),  size = 0.25) +
+  geom_line(aes(y = seasonal, x = Date), color = "#c13d75ff") +
+  geom_hline(yintercept = 0, lty = 2) +
+  ggtitle("Discharge vs. Time with Seasonal Component") + 
+  labs(x = "", y = expression("Discharge (ft"^3*"/s)"))
 ```
 
 10. How do the seasonal and trend components of the decomposition compare to the Clear Creek discharge dataset? Are they similar in magnitude?
 
-> Seasonal: 
+> Seasonal: The range in seasonal discharge values for the Eno dataset is smaller than the range in seasonal discharge values for the Clear Creek dataset. The Eno values span from -100 ft^3/s to about +200 ft^3/s, whereas the Clear Creek values range from 0 ft^3/s to 400 ft^3/s.
 
-> Trend: 
+> Trend: The trend components of both the Eno decomposition and the Clear Creek decomposition seem to be similar in magnitude. The Eno data spans from 50 ft^3/s to 300 ft^3/s , and the Clear Creek data spans from 50 ft^3/s to 350 ft^3/s. 
+
+> It is noteworthy that the remainder component of the Eno decomposition is larger than the remainder component of the Clear Creek decomposition. This could explain why the seasonal and trend components are smaller for the Eno decomposition-- perhaps a greater proportion of the variability in the Eno data is accounted for by the remainder component rather than the seasonal or trend components.  
 
 ## Trend Analysis
 Research question: Has there been a monotonic trend in discharge in Clear Creek over the period of study?
@@ -66,30 +108,52 @@ Research question: Has there been a monotonic trend in discharge in Clear Creek 
 11. Generate a time series of monthly discharge in Clear Creek from the ClearCreekDischarge.Monthly data frame. This time series should include just one column (discharge). 
 12. Run a Seasonal Mann-Kendall test on the monthly discharge data. Inspect the overall trend and the monthly trends. 
 ```{r}
+ClearCreekDischarge <- readNWISdv(siteNumbers = "06719505",
+                     parameterCd = "00060", # discharge (ft3/s)
+                     startDate = "",
+                     endDate = "")
+names(ClearCreekDischarge)[4:5] <- c("Discharge", "Approval.Code")
 
+ClearCreekDischarge.Monthly <- ClearCreekDischarge %>%
+  mutate(Year = year(Date), 
+         Month = month(Date)) %>%
+  group_by(Year, Month) %>%
+  summarise(Discharge = mean(Discharge))
+
+ClearCreek_ts <- ts(ClearCreekDischarge.Monthly[[3]], frequency = 12)
+
+CCtrend <- smk.test(ClearCreek_ts)
+
+CCtrend
+summary(CCtrend)
 ```
 
 13. Is there an overall monotonic trend in discharge over time? If so, is it positive or negative?
 
-> 
+> There is no significant trend in the data over time. While the z-score is slightly positive, the p-value is greater than 0.05. Therefore, the trend is not significant. 
 
 14. Are there any monthly monotonic trends in discharge over time? If so, during which months do they occur and are they positive or negative?
 
-> 
+> There are statistically significant trends in discharge over time for the months of June and July. These monthly trends are positive. 
 
 ## Reflection
 15. What are 2-3 conclusions or summary points about time series you learned through your analysis?
 
->
+> 1) There are four components to a time series: seasonal variation, a trend over time, an error or remainder component, and sometimes a cyclical component representing an overarching trend on a greater timescale than seasonal variation. 
+2) A Mann-Kendall test can be used to determine whether or not there is a monotonic trend in the data over time.
+3) If the data were sampled at erratic and inconsistent rates, some type of interpolation (e.g. pieceweise, linear, spline) can be performed on the data before performing the Mann-Kendall test. 
 
 16. What data, visualizations, and/or models supported your conclusions from 12?
 
-> 
+> The trend decomposition helped me to understand the different components of the time series. Going through the Mann_Kendall process helped me to understand the interpretation of the trend in the data over time and whether or not it is monotonic. 
 
 17. Did hands-on data analysis impact your learning about time series relative to a theory-based lesson? If so, how?
 
->
+> I believe that having to work through the code encouraged me to understand the components of each of these statistical tools more deeply than if I had just read about them in a textbook. 
 
 18.	How did the real-world data compare with your expectations from theory?
 
->
+> I think it makes sense that the Eno discharge data had less of a seasonal and overarching trend pattern and more of a random remainder component to its decomposition when compared to the Clear Creek discharge data. This is because the Eno River is located in North Carolina, a state which experiences a wide variety of precipitation events, such as hurricanes and snowfall, that could contribute to variations in discharge. The Clear Creek on the other hand, is located in Colorado, a state which does not experience hurricanes and, thus, would have more consistent precipitation patterns. 
+
+> I was surprised that there were not more pronounced monotonic trends in the Clear Creek data, since climate change is occurring and altering natural processes everywhere. 
+

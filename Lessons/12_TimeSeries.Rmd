@@ -184,7 +184,7 @@ ClearCreekDischarge <- readNWISdv(siteNumbers = "06719505",
                      endDate = "")
 names(ClearCreekDischarge)[4:5] <- c("Discharge", "Approval.Code")
 
-ClearCreekDischarge.Monthly <- ClearCreekDischarge %>%
+ClearCreekDischarge.Monthly2 <- ClearCreekDischarge %>%
   mutate(Year = year(Date), 
          Month = month(Date)) %>%
   group_by(Year, Month) %>%
