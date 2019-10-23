@@ -17,8 +17,13 @@ editor_options:
 
 Wednesday we used high-frequency hydrographs to learn about how water flows through watersheds to get to streams. How do you think water chemistry is impacted by the ways water flows through a watershed?
 
->
-
+> Recap from last class
+quick flow -- over land, pipes, etc.
+baseflow -- groundwater, soil pathways
+last class -- two streams were headwater streams -- from watershed 
+for assignment -- streams will be bigger and further down network 
+today -- hydrological & biological changes in water chemistry?
+ex. salt concentration will decrease after quickflow but increase when reaches baseflow
 
 ## Session Set Up
 
@@ -27,6 +32,10 @@ getwd()
 
 # install.packages("StreamPULSE")
 # install.packages("streamMetabolizer")
+#install.packages("streamMetabolizer", dependencies=TRUE, 
+                # repos=c("https://owi.usgs.gov/R","https://cran.rstudio.com"))
+library(devtools)
+#install_github('streampulse/StreamPULSE')
 
 packages <- c(
   "dataRetrieval", 
@@ -82,15 +91,22 @@ ggplot(Potdat,
   geom_point() +
   scale_x_log10() +
   scale_y_log10()
+
+#C-Q plots <-- concentration against flow ... how much does concentration change with flow? 
+#log transform helps to disperse data to visualize more effectively 
 ```
 
 Which of these rivers is more chemostatic?
 
->
+> not the second one
 
 ## Hysteresis Loops
 
-Hysteresis occurs when the concentration varies with discharge in a different relationship on the rising and falling limbs of a storm. This can be caused by _flushing_ behavior or _dilution_ behavior. 
+Hysteresis occurs when the concentration varies with discharge in a different relationship on the rising and falling limbs of a storm. This can be caused by _flushing_ (positive relationship) behavior or _dilution_ (negative relationship) behavior.
+
+_Chemostatic_ means neutral relationship... flat line
+
+Sources of water at different times are coming from different pathways during a storm 
 
 ```{r}
 dygraph(
@@ -101,6 +117,9 @@ dygraph(
   ) %>% 
   dySeries("Nitrate", axis = "y2") %>%
   dyRangeSelector()
+
+#As flow increases, concentration decreases
+#On a C-Q plot, important to look at the slope 
 ```
 
 Look at the storm that occured around February 1st. Do you expect this storm to be a flushing or a diluting storm?
@@ -114,26 +133,40 @@ PotomacStorm <- Potdat %>%
 ggplot(PotomacStorm, aes(x = Flow_Inst, y = Nitrate_mgl, color = dateTime)) +
   geom_point() 
 
+#There is a cycling that occurs ... flow goes up and then down ... concentration is different throughout 
+#counterclockwise means rising limb of storm has lower concentration than falling limb of storm 
+#Clockwise means falling limb of storm has higher concentration than falling limb of storm 
+#Different parts of storm are dominated by either quick flow or base flow 
 
+#The Potomac Storm is diluting storm and counterclockwise 
+#Concentrations of nitrate are lower in quickflow than in baseflow 
+#Baseflow comes from groundwater
+#Quickflow comes from overland flow
+#More nitrate in the groundwater than on the surface of land 
+
+#In general, diluting are more likely counterclockwise and less concentration in quickflow 
+
+#In a flushing storm, will "flush" compound / solute and pushes large amount of solutes out and increases concentrations in river 
 ```
 
 Did this storm exhibit clockwise or counterclockwise hysteresis?
 
->
+>counterclockwise
 
 Which direction do hysteresis loops slope for diluting storms?
 
->
+>down
 
 Which direction do hysteresis loops go for flushing storms?
 
->
+>could potentially go either way
 
 ## Using dissolved oxygen to estimate metabolism
 
 What is "ecosystem metabolism"?
 
->
+>Gross Primary Productivity (GPP)
+Ecosystem Respiration (ER)
 
 Why would we want to know the *GPP* and *ER* of a river reach?
 
@@ -144,6 +177,7 @@ The StreamPulse project is a group of researchers around the world who are measu
 
 ```{r}
 citation('streamMetabolizer')
+#model to use oxygen data to create metabolism
 ```
 
 ```{r}
@@ -161,19 +195,26 @@ Eno.DO <- Enodat[[1]] %>%
   mutate(DateTime_Solar = convert_UTC_to_solartime(DateTime_UTC, Eno.lon))
 
 ggplot(Eno.DO, aes(x = DateTime_Solar, y = DO_mgL)) + geom_line()
+
+#big swings in oxygen concentration over the course of a day 
 ```
 
 In a nutshell, the package uses a Bayesian statistical approach to fit the following model to the data: 
 
 $\frac{dO_2}{dt} = P_t + R_t + D_t$
 
+
 What are P~t~, R~t~ and D~t~? What are these parameters functions of?
 
->
-
+>p is productivity
+r is respiration
+d is diffusion
+oxygen concentrations differ with temeprature and depend on flow 
+productivity increases oxygen concentrations (photosynthesis)
+produtvitiy only occurs during the day ... respiration occurs all the time <-- oscillation in data & [DO]
 
 Visit https://data.streampulse.org/ 
-
+#Looked at 2017 Eno data -- ER is higher than GPP, so Eno River is net heterotrophic... consuming more carbon than producing 
 
 First, skim the `Learn how` page on how to model stream metabolism. You don’t need to understand all of the technical language, but pay attention to all of the decisions that a researcher needs to make to find out if they can use this website/R packages to model metabolism in their stream reach. Not all methods will work everywhere, and this is a very important thing to keep in mind when doing any type of research. 
 

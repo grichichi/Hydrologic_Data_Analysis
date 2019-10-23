@@ -1,6 +1,6 @@
 ---
 title: "Assignment 7: High Frequency Data"
-author: "Student Name"
+author: "Gabi Richichi"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
@@ -28,7 +28,11 @@ The completed exercise is due on 16 October 2019 at 9:00 am.
 
 
 ```{r setup}
-
+getwd()
+library(StreamPULSE)
+library(streamMetabolizer)
+library(tidyverse)
+theme_set(theme_classic())
 ```
 
 
@@ -36,23 +40,59 @@ The completed exercise is due on 16 October 2019 at 9:00 am.
 
 5. Reformat the data into one dataframe with columns DateTime_UTC, DateTime_Solar (using `convert_UTC_to_solartime()`), SiteName, DO_mgL, Discharge_m3s, and Nitrate_mgL.
 ```{r Datadownload}
+citation('streamMetabolizer')
 
+Data <- request_data(
+  sitecode = "KS_KANSASR", 
+  variables = c('Discharge_m3s', 'DO_mgL', 'Nitrate_mgL'))
+
+Data.lon <- Data[[2]]$lon
+
+Data.vars <- Data[[1]] %>%
+  spread(value = value, key = variable) %>%
+  mutate(DateTime_Solar = convert_UTC_to_solartime(DateTime_UTC, Data.lon))
+
+Data.vars2 <- Data[[2]] %>%
+  mutate(SiteName = name)
+
+Data.combined <-
+  left_join(Data.vars, Data.vars2) %>%
+  select(DateTime_UTC, DateTime_Solar, SiteName, DO_mgL, Discharge_m3s, Nitrate_mgL)
 
 ```
 
 6. Plot each of the 3 variables against solar time for the period of record
 
 ```{r}
+DOPlot <-
+  ggplot(Data.combined, aes(x = DateTime_Solar, y = DO_mgL)) + 
+  geom_line() +
+  ggtitle("Dissolved Oxygen Concentration vs. Solar Time") +
+  labs(x = "Solar Time", y = "Dissolved Oxygen (mg/L)")
+print(DOPlot)
 
+DischargePlot <-
+  ggplot(Data.combined, aes(x = DateTime_Solar, y = Discharge_m3s)) + 
+  geom_line() +
+  ggtitle("Discharge vs. Solar Time") +
+  labs(x = "Solar Time", y = expression("Discharge (m"^3*"/s)"))
+print(DischargePlot)
+
+NitratePlot <-
+  ggplot(Data.combined, aes(x = DateTime_Solar, y = Nitrate_mgL)) + 
+  geom_line() +
+  ggtitle("Nitrate Concentration vs. Solar Time") +
+  labs(x = "Solar Time", y = "Nitrate (mg/L)")
+print(NitratePlot)
 ```
 
 7. How will you address gaps in these dataseries?
 
->
+> I will address the gaps in these dataseries by filtering the series and dropping na values. This will be particularly helpful when conducting future analyses, such as the baseflow vs. quickflow partitioning calculations. 
 
 8. How does the daily amplitude of oxygen concentration swings change over the season? What might cause this?
 
->
+> The daily amplitude of oxygen concentration swings gets larger as the season progresses from winter toward summer. As the temperature gets warmer, a greater quantity of photosynthetic action happens, and there is more production than usual. There is also a greater quantity of cellular respiration occurring as life grows and prospers in the warmer weather. As a result, the daily swings between high and low dissolved oxygen concentrations are greater, as there is a higher quantity of DO in the day (when both cellular respiration and photosynthesis occur) and a lower quantity of DO at night (when cellular respiration occurs but photosynthesis does not).
 
 ## Baseflow separation
 9. Use the `EcoHydRology::BaseflowSeparation()` function to partition discharge into baseflow and quickflow, and calculate how much water was exported as baseflow and quickflow for this time period. Use the DateTime_UTC column as your timestamps in this analysis.
@@ -63,28 +103,85 @@ The `package::function()` notation being asked here is a way to call a function 
 
 
 ```{r}
+#install.packages("EcoHydRology")
+library(EcoHydRology)
+
+Data.dropna <- drop_na(Data.combined)
+
+BaseFlow <- BaseflowSeparation(
+  Data.dropna$Discharge_m3s, 
+  filter_parameter = 0.925 
+  #passes = 3,
+  )
+
+FlowData <- cbind(Data.dropna, BaseFlow)
+
+FlowPlot <- ggplot(FlowData, aes(x = DateTime_UTC, y = Discharge_m3s)) + 
+  geom_line() +
+  # scale_y_log10() +
+  geom_line(mapping = aes(x = DateTime_UTC, y = bt), color = "darkorange4") +
+  geom_line(mapping = aes(x = DateTime_UTC, y = qft), color = "steelblue4") +
+  labs(x = "DateTime", y = expression("Discharge (m"^3*"/s)")) +
+  ggtitle("Discharge vs. Time")
+print(FlowPlot)
+
+"""
+DataWithDecimalDate <- FlowData %>%
+  mutate(FlowData, DateAsDecimal = convert_date_to_doyhr(c(1, as.POSIXlt(DateTime_UTC))))
+print(length(c(zero,diff(as.numeric(FlowData$DateTime_UTC),1,1))))
+"""
+print(c(0, diff(as.numeric(FlowData$DateTime_UTC))))
+
+
+Export <- FlowData %>%
+  
+  mutate(FlowData, timestep = c(0, diff(as.numeric(FlowData$DateTime_UTC))),
+         baseflowexport = bt * timestep,
+         quickflowexport = qft * timestep) #%>%
+         print(FlowData$quickflowexport)
+#  summarize(BaseflowExport_cf = sum(baseflowexport),
+#            QuickflowExport_cf = sum(quickflowexport),
+#            TotalExport_cf = BaseflowExport_cf + QuickflowExport_cf)
 
 ```
 
 
 11. What percentage of total water exported left as baseflow and quickflow from the Kansas River over this time period?
 
->
+> A much greater percentage of total water exported left as baseflow than as quickflow. 
 
 12. This is a much larger river and watershed than the 2 we investigated in class. How does the size of the watershed impact how flow is partitioned into quickflow and baseflow? 
 
->
+> The larger the watershed, the more flow will be partitioned into baseflow, because a larger watershed has a greater volume capacity to store water between precipitation events. 
 
 13. The site we are looking at is also further down in its river network (i.e. instead of being a headwater stream, this river has multiple tributaries that flow into it). How does this impact your interpretation of your results?
 
->
+> The further down a river network a site is, the more flow will be partitioned into baseflow. This is because there is less influence by quickflow from precipitation events further down the network. 
 
 ## Chemical Hysteresis
 
 14. Create a ggplot of flow vs. nitrate for the large storm in May (~May 1 - May 20). Use color to represent Date and Time.
 
 ```{r}
+library(lubridate)
+DataWithMonth <- FlowData %>%
+  mutate(FlowData, Month = month(FlowData$DateTime_UTC))
 
+StormData <- FlowData %>%
+  filter(DateTime_UTC >= )
+NitrateFlowPlot <- ggplot(FlowData, aes(x = Nitrate_mgL, y = Discharge_m3s)) +
+  geom_line()
+
+print(NitrateFlowPlot)
+
+dygraph(
+  cbind(
+    Flow = xts(Potdat$Flow_Inst, order.by = Potdat$dateTime), 
+    Nitrate = xts(Potdat$Nitrate_mgl, order.by = Potdat$dateTime)
+    )
+  ) %>% 
+  dySeries("Nitrate", axis = "y2") %>%
+  dyRangeSelector()
 ```
 
 15. Does this storm show clockwise or counterclockwise hysteresis? Was this storm a flushing or diluting storm?
