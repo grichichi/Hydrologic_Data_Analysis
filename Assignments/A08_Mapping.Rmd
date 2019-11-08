@@ -1,6 +1,6 @@
 ---
 title: "Assignment 8: Mapping"
-author: "Student Name"
+author: "Gabi Richichi"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
@@ -28,7 +28,22 @@ The completed exercise is due on 23 October 2019 at 9:00 am.
 4. Load the lagos database, the USA rivers water features shape file, and the HUC6 watershed shape file.
 
 ```{r setup}
+getwd()
+library(tidyverse)
+library(lubridate)
+library(cowplot)
+library(LAGOSNE)
+library(sf)
+library(maps)
+library(viridis)
+theme_set(theme_classic())
 
+waterfeatures <- st_read("../Data/Raw/hydrogl020.dbf")
+class(waterfeatures)
+
+HUC6 <- st_read("./Data/Raw/Watersheds_Spatial/WBDHU6.dbf")
+
+LAGOSdata <- lagosne_load()
 ```
 
 ## Mapping water quality in lakes

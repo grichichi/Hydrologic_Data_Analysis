@@ -125,23 +125,21 @@ FlowPlot <- ggplot(FlowData, aes(x = DateTime_UTC, y = Discharge_m3s)) +
   ggtitle("Discharge vs. Time")
 print(FlowPlot)
 
-"""
-DataWithDecimalDate <- FlowData %>%
-  mutate(FlowData, DateAsDecimal = convert_date_to_doyhr(c(1, as.POSIXlt(DateTime_UTC))))
-print(length(c(zero,diff(as.numeric(FlowData$DateTime_UTC),1,1))))
-"""
+#DataWithDecimalDate <- FlowData %>%
+#  mutate(FlowData, DateAsDecimal = convert_date_to_doyhr(c(1, as.POSIXlt(DateTime_UTC))))
+#print(length(c(zero,diff(as.numeric(FlowData$DateTime_UTC),1,1))))
+
 print(c(0, diff(as.numeric(FlowData$DateTime_UTC))))
 
 
-Export <- FlowData %>%
-  
-  mutate(FlowData, timestep = c(0, diff(as.numeric(FlowData$DateTime_UTC))),
-         baseflowexport = bt * timestep,
-         quickflowexport = qft * timestep) #%>%
-         print(FlowData$quickflowexport)
-#  summarize(BaseflowExport_cf = sum(baseflowexport),
-#            QuickflowExport_cf = sum(quickflowexport),
-#            TotalExport_cf = BaseflowExport_cf + QuickflowExport_cf)
+Export <-  mutate(FlowData, timestep = c(0, diff(as.numeric(FlowData$DateTime_UTC))),
+       baseflowexport = bt * timestep,
+       quickflowexport = qft * timestep) 
+print(FlowData$quickflowexport)
+Summary <-  
+  summarize(Export, BaseflowExport_cf = sum(baseflowexport),
+  QuickflowExport_cf = sum(quickflowexport),
+  TotalExport_cf = BaseflowExport_cf + QuickflowExport_cf)
 
 ```
 
@@ -164,24 +162,17 @@ Export <- FlowData %>%
 
 ```{r}
 library(lubridate)
-DataWithMonth <- FlowData %>%
-  mutate(FlowData, Month = month(FlowData$DateTime_UTC))
+DataWithMonth <- 
+  mutate(FlowData, Month = month(FlowData$DateTime_UTC), 
+         Day = day(FlowData$DateTime_UTC))
 
-StormData <- FlowData %>%
-  filter(DateTime_UTC >= )
-NitrateFlowPlot <- ggplot(FlowData, aes(x = Nitrate_mgL, y = Discharge_m3s)) +
-  geom_line()
+StormData <- 
+  filter(DataWithMonth, Month == 5 & Day <=20)
 
+NitrateFlowPlot <- ggplot(StormData, aes(x = Nitrate_mgL, y = Discharge_m3s, color = DateTime_UTC)) +
+  geom_point()
 print(NitrateFlowPlot)
 
-dygraph(
-  cbind(
-    Flow = xts(Potdat$Flow_Inst, order.by = Potdat$dateTime), 
-    Nitrate = xts(Potdat$Nitrate_mgl, order.by = Potdat$dateTime)
-    )
-  ) %>% 
-  dySeries("Nitrate", axis = "y2") %>%
-  dyRangeSelector()
 ```
 
 15. Does this storm show clockwise or counterclockwise hysteresis? Was this storm a flushing or diluting storm?
