@@ -154,16 +154,46 @@ Your turn! Notice that Maine has a large number of lakes with secchi depth measu
 1. Filter the states and secchi depth datasets so that they contain Maine only. For the secchi depth dataset, create a summary dataset with just the mean secchi depth. 
 
 ```{r}
+# generate a map of U.S. states
+states <- st_as_sf(map(database = "state", plot = TRUE, fill = TRUE, col = "white"))
+
+# filter only states that are included in the LAGOSNE database
+states.subset <- filter(states, ID %in% 
+                          c("minnesota", "iowa", "wisconsin", "illinois",
+                            "missouri", "michigan", "indiana", "ohio",
+                            "pennsylvania", "new york", "new jersey",
+                            "connecticut", "new hampshire", "rhode island",
+                            "massachusetts", "vermont", "maine"))
+# visualize state plot
+LAGOSstateplot <- ggplot(states.subset) +
+  geom_sf(fill = "white")
+print(LAGOSstateplot)
+
+# load LAGOSNE data frames
+LAGOSlocus <- LAGOSdata$locus
+LAGOSstate <- LAGOSdata$state
+LAGOSnutrient <- LAGOSdata$epi_nutr
+LAGOSlimno <- LAGOSdata$lakes_limno
+
+# Create a data frame to visualize secchi depth
+LAGOScombined <- 
+  left_join(LAGOSnutrient, LAGOSlocus) %>%
+  left_join(., LAGOSlimno) %>%
+  left_join(., LAGOSstate) %>%
+  filter(!is.na(state)) %>%
+  select(lagoslakeid, sampledate, secchi, lake_area_ha, maxdepth, nhd_lat, nhd_long, state)
+
+#MAINE data
+
 maine <- LAGOScombined %>%
   filter(LAGOScombined$state == "ME")
 
 states.subset.maine <- filter(states, ID %in%
                                 c("maine"))
-states.spatial.maine <- st_as_sf(map(states.subset.maine, coords = c("long", "lat"), crs = 4326))
-  
+
 secchi.summary.maine <- maine %>%
   group_by(lagoslakeid) %>%
-  summarise(secchi.mean = mean(secchi), #) %>%
+  summarise(secchi.mean = mean(secchi),
             area = mean(lake_area_ha),
             depth = mean(maxdepth),
             lat = mean(nhd_lat), 
@@ -171,6 +201,7 @@ secchi.summary.maine <- maine %>%
   drop_na()
 
 secchi.spatial.maine <- st_as_sf(secchi.summary.maine, coords = c("long", "lat"), crs = 4326)
+
 
 Secchiplot.maine <- ggplot() + 
   geom_sf(data = states.subset.maine, fill = "white") +
@@ -180,8 +211,6 @@ Secchiplot.maine <- ggplot() +
   labs(color = "Average Secchi Depth (m)") +
   theme(legend.position = "top")
 print(Secchiplot.maine)
-  
-
 
 ```
 

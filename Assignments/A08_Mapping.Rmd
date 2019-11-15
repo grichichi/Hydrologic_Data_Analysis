@@ -41,7 +41,7 @@ theme_set(theme_classic())
 waterfeatures <- st_read("../Data/Raw/hydrogl020.dbf")
 class(waterfeatures)
 
-HUC6 <- st_read("./Data/Raw/Watersheds_Spatial/WBDHU6.dbf")
+HUC6 <- st_read("../Data/Raw/Watersheds_Spatial/WBDHU6.dbf")
 
 LAGOSdata <- lagosne_load()
 ```
@@ -57,72 +57,184 @@ Complete the in-class exercise from lesson 15, to map average secchi depth measu
 5. Filter the states and secchi depth datasets so that they contain Maine only. For the secchi depth dataset, create a summary dataset with just the mean secchi depth. 
 
 ```{r}
+# generate a map of U.S. states
+states <- st_as_sf(map(database = "state", plot = TRUE, fill = TRUE, col = "white"))
+
+# filter only states that are included in the LAGOSNE database
+states.subset <- filter(states, ID %in% 
+                          c("minnesota", "iowa", "wisconsin", "illinois",
+                            "missouri", "michigan", "indiana", "ohio",
+                            "pennsylvania", "new york", "new jersey",
+                            "connecticut", "new hampshire", "rhode island",
+                            "massachusetts", "vermont", "maine"))
+# visualize state plot
+LAGOSstateplot <- ggplot(states.subset) +
+  geom_sf(fill = "white")
+print(LAGOSstateplot)
+
+# load LAGOSNE data frames
+LAGOSlocus <- LAGOSdata$locus
+LAGOSstate <- LAGOSdata$state
+LAGOSnutrient <- LAGOSdata$epi_nutr
+LAGOSlimno <- LAGOSdata$lakes_limno
+
+# Create a data frame to visualize secchi depth
+LAGOScombined <- 
+  left_join(LAGOSnutrient, LAGOSlocus) %>%
+  left_join(., LAGOSlimno) %>%
+  left_join(., LAGOSstate) %>%
+  filter(!is.na(state)) %>%
+  select(lagoslakeid, sampledate, secchi, lake_area_ha, maxdepth, nhd_lat, nhd_long, state)
+
+#MAINE data
+
+maine <- LAGOScombined %>%
+  filter(LAGOScombined$state == "ME")
+
+states.subset.maine <- filter(states, ID %in%
+                                c("maine"))
+
+secchi.summary.maine <- maine %>%
+  group_by(lagoslakeid) %>%
+  summarise(secchi.mean = mean(secchi),
+            area = mean(lake_area_ha),
+            depth = mean(maxdepth),
+            lat = mean(nhd_lat), 
+            long = mean(nhd_long)) %>%
+  drop_na()
+
+secchi.spatial.maine <- st_as_sf(secchi.summary.maine, coords = c("long", "lat"), crs = 4326)
 
 ```
 
 6. Create a plot of mean secchi depth for lakes in Maine, with mean secchi depth designated as color and the lake area as the size of the dot. Remember that you are using size in the aesthetics and should remove the size = 1 from the other part of the code. Adjust the transparency of points as needed.
 
 ```{r}
-
+Secchiplotmaine <- ggplot() + 
+  geom_sf(data = states.subset.maine, fill = "white") +
+  geom_sf(data = secchi.spatial.maine, aes(color = secchi.mean, size = area),
+          alpha = 0.5) +
+  scale_color_viridis_c() +
+  labs(color = "Average Secchi Depth (m)") +
+  theme(legend.position = "top")
+print(Secchiplotmaine)
 ```
 
 7. Create a second plot, but this time use maximum depth of the lake as the size of the dot. 
 
 ```{r}
-
+Secchiplotdepth <- ggplot() + 
+  geom_sf(data = states.subset.maine, fill = "white") +
+  geom_sf(data = secchi.spatial.maine, aes(color = secchi.mean, size = depth),
+          alpha = 0.5) +
+  scale_color_viridis_c() +
+  labs(color = "Average Secchi Depth (m)") +
+  theme(legend.position = "top")
+print(Secchiplotdepth)
 ```
 
 8. Plot these maps in the same plot with the `plot_grid` function. Don't worry about adjusting the legends (if you have extra time this would be a good bonus task).
 
 ```{r}
-
+giantplot <- plot_grid(Secchiplotmaine, Secchiplotdepth, axis = c("l"))
+print(giantplot)
 ```
 
 What would you change about the legend to make it a more effective visualization? 
 
-> 
+> I would make the legend smaller so that all of the text could be read. I would also align it better so both legends don't overlap each other. 
 
 9. What relationships do you see between secchi depth, lake area, and lake depth? Which of the two lake variables seems to be a stronger determinant of secchi depth? (make a scatterplot and run a regression to test this)
 
 *Note: consider log-transforming a predictor variable if appropriate*
 
 ```{r}
+DepthTest <- lm(data = secchi.spatial.maine, log(depth) ~ secchi.mean)
+summary(DepthTest)
+AreaTest <- lm(data = secchi.spatial.maine, log(area) ~ secchi.mean)
+summary(AreaTest)
 
+scatterplotArea <- ggplot(secchi.spatial.maine, aes(x = log(area), y = secchi.mean)) +
+  geom_point() +
+  labs(x = expression("log(Area (m"^3*"))"), y = "Mean Secchi Depth (m)") +
+  ggtitle("Mean Secchi Depth vs. Lake Area") +
+  geom_smooth(se = FALSE, method = lm)
+print(scatterplotArea)
+
+scatterplotDepth <- ggplot(secchi.spatial.maine, aes(x = log(depth), y = secchi.mean)) +
+  geom_point() +
+  labs(x = "log(Depth (m))", y = "Mean Secchi Depth (m)") +
+  ggtitle("Mean Secchi Depth vs. Lake Depth") +
+  geom_smooth(se = FALSE, method = lm)
+print(scatterplotDepth)
 ```
 
-> 
+> There seems to be a stronger relationship between lake depth and mean secchi depth than between lake area and mean secchi depth. The relationship between lake depth and mean secchi depth is a positive one. As lake depth increases so does mean secchi depth. The R-squared value of this log-transformed linear regression is 0.47, whereas the R-squared value of the log-transformed linear regression for area is 0.066. Therefore, there is a closer correlation between lake depth and secchi depth than between lake area and secchi depth. 
+
 
 ## Mapping water features and watershed boundaries
 
 10. Wrangle the USA rivers and HUC6 watershed boundaries dataset so that they include only the features present in Florida (FL). Adjust the coordinate reference systems if necessary to ensure they use the same projection. 
 
 ```{r}
+# Filter for Florida
+waterfeatures <- filter(waterfeatures, STATE == "FL")
+
+# Filter further
+waterfeatures <- filter(waterfeatures, FEATURE != "Apparent Limit" & FEATURE != "Closure Line")
+
+Waterfeaturesplot <- 
+ggplot(waterfeatures) +
+  geom_sf(aes(fill = FEATURE, color = FEATURE)) +
+  scale_color_viridis_d(option = "magma", end = 0.9) +
+  scale_fill_viridis_d(option = "magma", end = 0.9)
+print(Waterfeaturesplot)
+
+
+
+summary(HUC6$States)
+HUC6.FL <- HUC6 %>%
+  filter(States %in% c("AL,FL", "AL,FL,GA", "FL,GA", "FL"))
+    
+st_crs(waterfeatures)
+st_crs(HUC6.FL)
+waterfeatures <- st_set_crs(waterfeatures, 4269)
+st_crs(waterfeatures)
+
 
 ```
 
 11. Create a map of watershed boundaries in Florida, with the layer of water features on top. Color the watersheds gray (make sure the lines separating watersheds are still visible) and color the water features by type. 
 
 ```{r}
-
+FLlayers <- ggplot() +
+  geom_sf(data = HUC6.FL, aes(fill = Name), color = "darkgray", alpha = 0.5) +
+  geom_sf(data = waterfeatures) +
+  scale_fill_brewer(palette = "Paired")
+print(FLlayers)
 ```
 
 12. What are the dominant water features in Florida? How does this distribution differ (or not) compared to North Carolina?
 
-> 
+> The dominant water features in Florida are coastally-located watersheds, such as bays and estuaries. North Carolina had more inland lakes and rivers, in addition to coastal waterbodies. 
 
 ## Reflection
 13. What are 2-3 conclusions or summary points about mapping you learned through your analysis?
 
->
+> 1. The LAGOS database has information on all the states in the US with regard to lake information. The geographical information that this database provides also aids in mapping. 
+
+> 2. The HUC6 database contains watershed data that can be mapped.
+
+> 3. Color palettes can really aid in data visualization, in particular with mapping and mapping watersheds.
 
 14. What data, visualizations, and/or models supported your conclusions from 13?
 
-> 
+> The watershed mapping exercise helped me to understand the role data visualization can have on conveying information. It was really enlightening to see all the watersheds outlined and colored. I felt like I was learning new information I hadn't already known about the environment of Florida. 
 
 15. Did hands-on data analysis impact your learning about mapping relative to a theory-based lesson? If so, how?
 
->
+> Yes, for sure. Hand-on learning always helps. 
 
 16.	How did the real-world data compare with your expectations from theory?
 
->
+> I expected Florida to have watersheds near its coasts. I also expected secchi depth and lake depth to be somewhat related. 

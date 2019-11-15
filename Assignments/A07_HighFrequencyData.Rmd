@@ -88,7 +88,9 @@ print(NitratePlot)
 
 7. How will you address gaps in these dataseries?
 
-> I will address the gaps in these dataseries by filtering the series and dropping na values. This will be particularly helpful when conducting future analyses, such as the baseflow vs. quickflow partitioning calculations. 
+> I will address the gaps in these dataseries by filtering the series and dropping na values. This will be particularly helpful when conducting future analyses, such as the baseflow vs. quickflow partitioning calculations.
+
+> Another solution is to simply select for analysis sections of the graphs that have consistent data and avoid sections with gaps. 
 
 8. How does the daily amplitude of oxygen concentration swings change over the season? What might cause this?
 
@@ -141,12 +143,14 @@ Summary <-
   QuickflowExport_cf = sum(quickflowexport),
   TotalExport_cf = BaseflowExport_cf + QuickflowExport_cf)
 
+PercentQF <- Summary$QuickflowExport_cf/Summary$TotalExport_cf*100
+PercentBF <- Summary$BaseflowExport_cf/Summary$TotalExport_cf*100
 ```
 
 
 11. What percentage of total water exported left as baseflow and quickflow from the Kansas River over this time period?
 
-> A much greater percentage of total water exported left as baseflow than as quickflow. 
+> A much greater percentage of total water exported left as baseflow than as quickflow. Specifically, 96% of water exported left as baseflow, and 4% of water exported left as quickflow. 
 
 12. This is a much larger river and watershed than the 2 we investigated in class. How does the size of the watershed impact how flow is partitioned into quickflow and baseflow? 
 
@@ -177,25 +181,29 @@ print(NitrateFlowPlot)
 
 15. Does this storm show clockwise or counterclockwise hysteresis? Was this storm a flushing or diluting storm?
 
->
+> This storm shows clockwise hysteresis. This storm was a flushing storm. 
 
 16. What does this mean for how nitrate gets into the river from the watershed?
 
->
+> Nitrate enters the river through the rising portion of the storm, as discharge increases, and then leaves during the falling portion of the storm, when discharge decreases.
 
 ## Reflection
 17. What are 2-3 conclusions or summary points about high frequency data you learned through your analysis?
 
->
+> 1. High frequency data is useful in examining storm events. You can process data values for variables such as discharge and conductance or nitrate levels and determine whether the storm induced a flushing or diluting event.
+
+> 2. High frequency data can elucidate patterns over the course of a year, as well as over the course of a week. For example, you can discern tendencies in dissolved oxygen concentrations for winter months versus summer months. In this case of this assignment, dissolved oxygen concentrations had larger ranges for summer months than winter months.
+
+> 3. Many times high frequency data has gaps due to lack of sampling during periods of time. During experimental data wrangling, sections of time with consistent data can be selected in order to conduct proper analyses. 
 
 18. What data, visualizations, and/or models supported your conclusions from 17?
 
-> 
+> The hysteresis plot helped me visualize the concept of flushing and diluting events. Additionally, the DO vs. solar time plot helped me visualize patterns in DO over the course of a year.
 
 19. Did hands-on data analysis impact your learning about high frequency data relative to a theory-based lesson? If so, how?
 
->
+> Yes, I definitely believe I have committed to memory the concepts and the coding procedures of analyzing high frequency data due to this learning process.
 
 20.	How did the real-world data compare with your expectations from theory?
 
->
+> I expected storm events to have an effect on nutrient levels. When Hurricane Florence passed through North Carolina, I remember reading in the news about discharge from the storm transporting hog waste and coal ash into waterbodies. This is in alignment with the concepts of nutrient loading due to storm events. 
